@@ -1,4 +1,4 @@
-/* Fondo animado sutil con degradado en movimiento */
+/* Animación de fondo sutil */
 @keyframes backgroundAnimation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -68,14 +68,18 @@ button:hover {
   background-color: #5f689bd;
 }
 
+/* Canvas responsive */
 canvas {
   display: block;
   margin: 0 auto;
   background-color: #020202;
   border: 2px solid #d4af37;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
 }
 
-/* Estilo para la misión */
+/* Misión e información */
 #mission-info {
   margin: 10px;
   font-size: 1.2em;

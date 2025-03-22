@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
       canvas.style.display = "block";
       let bgMusic = document.getElementById("bg-music");
       if (bgMusic) {
-        bgMusic.volume = 0.5;
+        bgMusic.volume = 0.25;
         bgMusic.play().then(() => {
           console.log("Música de fondo reproduciéndose");
         }).catch((error) => {
@@ -25,11 +25,11 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Función para dibujar paredes con degradado y esquinas redondeadas (efecto grafeno y oro líquido)
+// Función para dibujar paredes con degradado (grafeno y oro líquido) y esquinas redondeadas
 function drawRoundedWall(ctx, x, y, width, height, radius) {
   let grad = ctx.createLinearGradient(x, y, x, y + height);
-  grad.addColorStop(0, "#3d3d3d");  // Grafeno (gris metálico)
-  grad.addColorStop(1, "#d4af37");    // Oro líquido suave
+  grad.addColorStop(0, "#3d3d3d");  // Grafeno
+  grad.addColorStop(1, "#d4af37");    // Oro líquido
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -48,6 +48,7 @@ function drawRoundedWall(ctx, x, y, width, height, radius) {
 // Configuración del canvas y laberinto en cuadrícula
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+// El canvas se dibuja en 600x600 internamente; se escala via CSS para responsividad
 canvas.width = 600;
 canvas.height = 600;
 const cellSize = 40;
@@ -84,7 +85,7 @@ let pelletImg = new Image();
 pelletImg.src = "logo.png";
 const pelletSize = 20;
 
-// Configuración del jugador (Pac-Man feliz y animado con pequeño ojo)
+// Configuración del jugador (Pac-Man feliz y animado)
 let player = {
   x: cellSize + cellSize/2,
   y: cellSize + cellSize/2,
@@ -93,7 +94,7 @@ let player = {
   speed: 2
 };
 
-// Configuración de los fantasmas ("El Estrés") – ahora tres, iniciando en celdas válidas
+// Configuración de los fantasmas ("El Estrés") – ahora tres, usando colores de marca
 let ghosts = [
   {
     x: 7 * cellSize + cellSize/2,
@@ -165,7 +166,7 @@ function update() {
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
-    // Aquí se puede agregar una animación de destellos (opcional)
+    // Aquí se podría agregar una breve animación de destellos (opcional)
   }
   // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
@@ -177,10 +178,9 @@ function update() {
     } else {
       ghost.direction = randomDirection();
     }
-    // Colisión entre jugador y fantasma
+    // Si hay colisión entre jugador y fantasma, muestra overlay de reinicio
     if (Math.hypot(player.x - ghost.x, player.y - ghost.y) < player.radius + ghost.radius) {
-      alert("¡Has sido atrapado por El Estrés!");
-      document.location.reload();
+      displayGameOver();
     }
   });
 }
@@ -245,16 +245,17 @@ function drawGhostShape(ghost) {
   ctx.beginPath();
   // Cabeza (semicírculo)
   ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
-  // Base ondulada (dividida en 3 segmentos)
+  // Base ondulada: dividida en 3 segmentos
   let segment = (ghost.radius * 2) / 3;
   ctx.lineTo(ghost.x + ghost.radius, ghost.y + ghost.radius);
   ctx.arc(ghost.x + ghost.radius - segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.arc(ghost.x, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.arc(ghost.x - ghost.radius + segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.closePath();
+  // Gradiente para el fantasma usando colores de marca
   let grad = ctx.createRadialGradient(ghost.x, ghost.y, ghost.radius * 0.3, ghost.x, ghost.y, ghost.radius);
-  grad.addColorStop(0, "#ff6666");
-  grad.addColorStop(1, "#ff0000");
+  grad.addColorStop(0, "#5f689bd");
+  grad.addColorStop(1, "#65d3a8");
   ctx.fillStyle = grad;
   ctx.fill();
 }
@@ -302,19 +303,20 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// Mostrar felicitación y enlace a la landing page cuando la misión se completa
-function displayCongratulations() {
-  // Detener el juego y limpiar el canvas
+// Mostrar overlay de Game Over con botón de reinicio
+function displayGameOver() {
+  // Evitar múltiples llamadas
+  if (document.getElementById("gameover-overlay")) return;
+  // Detener el juego
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Crear un overlay de felicitación
   let overlay = document.createElement("div");
-  overlay.id = "congrats-overlay";
-  overlay.style.position = "absolute";
+  overlay.id = "gameover-overlay";
+  overlay.style.position = "fixed";
   overlay.style.top = "0";
   overlay.style.left = "0";
   overlay.style.width = "100%";
   overlay.style.height = "100%";
-  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
   overlay.style.display = "flex";
   overlay.style.flexDirection = "column";
   overlay.style.justifyContent = "center";
@@ -323,10 +325,43 @@ function displayCongratulations() {
   overlay.style.fontSize = "1.5em";
   overlay.style.zIndex = "1000";
   overlay.innerHTML = `
+    <p>¡Oh no!</p>
+    <p>Has sido atrapado.</p>
+    <button id="restart-button" style="padding: 10px 20px; font-size: 1em; margin-top: 20px; background-color: #65d3a8; border: none; border-radius: 5px; cursor: pointer;">Reiniciar</button>
+    <p style="margin-top:20px; font-size:1em;">Descubre el lujo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById("restart-button").addEventListener("click", function(){
+    location.reload();
+  });
+}
+
+// Mostrar overlay de felicitación cuando la misión se complete
+function displayCongratulations() {
+  // Evitar múltiples llamadas
+  if (document.getElementById("congrats-overlay")) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let overlay = document.createElement("div");
+  overlay.id = "congrats-overlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.color = "#d9dfe2";
+  overlay.style.fontSize = "1.5em";
+  overlay.style.zIndex = "1000";
+  let totalTime = ((performance.now()-startTime)/1000).toFixed(2);
+  overlay.innerHTML = `
     <p>¡Felicidades!</p>
-    <p>Has completado la misión en <strong>${((performance.now()-startTime)/1000).toFixed(2)} segundos</strong> con <strong>${score} Tokens</strong>.</p>
+    <p>Misión completada en <strong>${totalTime} segundos</strong> con <strong>${score} Tokens</strong>.</p>
     <p>Descubre el lujo exclusivo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
-    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Jugar de nuevo</button>
+    <button id="restart-button" style="padding: 10px 20px; font-size: 1em; margin-top: 20px; background-color: #65d3a8; border: none; border-radius: 5px; cursor: pointer;">Jugar de nuevo</button>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
