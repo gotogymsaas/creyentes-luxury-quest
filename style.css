@@ -1,4 +1,4 @@
-/* Fondo animado sutil (degradado en movimiento) */
+/* Fondo animado sutil con degradado en movimiento */
 @keyframes backgroundAnimation {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -35,13 +35,15 @@ footer p {
 
 #start-screen {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #logo {
   width: 150px;
   height: auto;
   margin-bottom: 20px;
-  /* Efecto de brillo sutil para el logo */
   animation: pulse 2s infinite;
 }
 
@@ -70,10 +72,10 @@ canvas {
   display: block;
   margin: 0 auto;
   background-color: #020202;
-  border: 2px solid #d4af37; /* Suave tono dorado */
+  border: 2px solid #d4af37;
 }
 
-/* Información de la misión */
+/* Estilo para la misión */
 #mission-info {
   margin: 10px;
   font-size: 1.2em;
