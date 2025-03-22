@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Creyentes: The Luxury Quest - Pac-Man</title>
-  <!-- Meta viewport para responsividad -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="start-screen">
-    <!-- Asegúrate de que "logo.png" esté en el directorio del proyecto -->
-    <img src="logo.png" alt="Logo de GoToGym" id="logo">
+  <header>
     <h1>Creyentes: The Luxury Quest</h1>
+  </header>
+  <div id="start-screen">
+    <img src="logo.png" alt="Logo de GoToGym" id="logo">
     <button id="start-button">Iniciar la misión</button>
   </div>
   <canvas id="gameCanvas" style="display: none;"></canvas>
-  <!-- Archivo de música de fondo: en este caso, "ode_to_joy.mp3" (Ode to Joy es dominio público) -->
+  <footer>
+    <p>Desafía lo convencional. Vive el lujo y la excelencia con Go To Gym.</p>
+  </footer>
   <audio id="bg-music" src="ode_to_joy.mp3" loop></audio>
   <script src="main.js"></script>
 </body>

@@ -7,8 +7,25 @@ body {
   text-align: center;
 }
 
+header, footer {
+  padding: 10px;
+  background-color: #20415b;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2em;
+  color: #d9dfe2;
+}
+
+footer p {
+  margin: 0;
+  font-size: 1em;
+  color: #d9dfe2;
+}
+
 #start-screen {
-  padding-top: 50px;
+  padding: 20px;
 }
 
 #logo {
@@ -35,10 +52,11 @@ button:hover {
 canvas {
   display: block;
   margin: 0 auto;
-  background-color: #000000;
+  background-color: #020202;
+  border: 2px solid #3d9fe3;
 }
 
-/* Responsividad: Ajusta tamaños en dispositivos pequeños */
+/* Responsividad */
 @media (max-width: 800px) {
   #logo {
     width: 120px;
@@ -47,18 +65,25 @@ canvas {
     padding: 8px 16px;
     font-size: 14px;
   }
+  header h1 {
+    font-size: 1.5em;
+  }
 }
 
 @media (max-width: 480px) {
   #logo {
     width: 100px;
   }
-  h1 {
-    font-size: 20px;
+  header h1 {
+    font-size: 1.2em;
   }
   button {
     padding: 6px 12px;
     font-size: 12px;
   }
+  footer p {
+    font-size: 0.9em;
+  }
 }
+
 
