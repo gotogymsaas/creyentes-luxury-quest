@@ -68,7 +68,7 @@ button:hover {
   background-color: #5f689bd;
 }
 
-/* Canvas responsive */
+/* Canvas responsive: se escala hasta 600px de ancho */
 canvas {
   display: block;
   margin: 0 auto;
@@ -79,11 +79,33 @@ canvas {
   height: auto;
 }
 
-/* Misión e información */
+/* Información de misión */
 #mission-info {
   margin: 10px;
   font-size: 1.2em;
   color: #d9dfe2;
+}
+
+/* Estilos para el joystick en móviles */
+#joystick {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  touch-action: none;
+}
+#joystick .knob {
+  position: absolute;
+  top: 35px;
+  left: 35px;
+  width: 30px;
+  height: 30px;
+  background: #65d3a8;
+  border-radius: 50%;
 }
 
 /* Responsividad */

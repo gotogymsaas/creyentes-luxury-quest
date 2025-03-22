@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
       canvas.style.display = "block";
       let bgMusic = document.getElementById("bg-music");
       if (bgMusic) {
-        bgMusic.volume = 0.25;
+        bgMusic.volume = 0.5;
         bgMusic.play().then(() => {
           console.log("Música de fondo reproduciéndose");
         }).catch((error) => {
@@ -23,9 +23,61 @@ document.addEventListener("DOMContentLoaded", function() {
   } else {
     console.log("No se encontró el botón de inicio");
   }
+  // Si se detecta un dispositivo móvil, muestra el joystick
+  if (/Mobi|Android/i.test(navigator.userAgent)) {
+    let joystick = document.getElementById("joystick");
+    if (joystick) {
+      joystick.style.display = "block";
+      createJoystick(joystick);
+    }
+  }
 });
 
-// Función para dibujar paredes con degradado (grafeno y oro líquido) y esquinas redondeadas
+// Función para crear un joystick en pantalla
+function createJoystick(element) {
+  let knob = document.createElement("div");
+  knob.className = "knob";
+  element.appendChild(knob);
+  let centerX = element.offsetWidth / 2;
+  let centerY = element.offsetHeight / 2;
+  let maxDistance = element.offsetWidth / 2;
+  
+  element.addEventListener("touchstart", function(e) {
+    e.preventDefault();
+    handleTouch(e);
+  });
+  element.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+    handleTouch(e);
+  });
+  element.addEventListener("touchend", function(e) {
+    e.preventDefault();
+    knob.style.left = (centerX - knob.offsetWidth/2) + "px";
+    knob.style.top = (centerY - knob.offsetHeight/2) + "px";
+    player.direction = {x: 0, y: 0};
+  });
+  
+  function handleTouch(e) {
+    let touch = e.touches[0];
+    let rect = element.getBoundingClientRect();
+    let x = touch.clientX - rect.left;
+    let y = touch.clientY - rect.top;
+    let deltaX = x - centerX;
+    let deltaY = y - centerY;
+    let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    let angle = Math.atan2(deltaY, deltaX);
+    if (distance > maxDistance) {
+      distance = maxDistance;
+    }
+    let knobX = centerX + deltaX * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetWidth/2;
+    let knobY = centerY + deltaY * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetHeight/2;
+    knob.style.left = knobX + "px";
+    knob.style.top = knobY + "px";
+    player.direction = {x: Math.cos(angle), y: Math.sin(angle)};
+  }
+}
+
+// Función para dibujar paredes con degradado y esquinas redondeadas
 function drawRoundedWall(ctx, x, y, width, height, radius) {
   let grad = ctx.createLinearGradient(x, y, x, y + height);
   grad.addColorStop(0, "#3d3d3d");  // Grafeno
@@ -48,7 +100,6 @@ function drawRoundedWall(ctx, x, y, width, height, radius) {
 // Configuración del canvas y laberinto en cuadrícula
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-// El canvas se dibuja en 600x600 internamente; se escala via CSS para responsividad
 canvas.width = 600;
 canvas.height = 600;
 const cellSize = 40;
@@ -94,28 +145,31 @@ let player = {
   speed: 2
 };
 
-// Configuración de los fantasmas ("El Estrés") – ahora tres, usando colores de marca
+// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca
 let ghosts = [
   {
     x: 7 * cellSize + cellSize/2,
     y: 4 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 1, y: 0},
-    speed: 2
+    speed: 2,
+    color: "#65d3a8"
   },
   {
     x: 10 * cellSize + cellSize/2,
     y: 6 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: -1, y: 0},
-    speed: 2
+    speed: 2,
+    color: "#5f689bd"
   },
   {
     x: 11 * cellSize + cellSize/2,
     y: 3 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 0, y: 1},
-    speed: 2
+    speed: 2,
+    color: "#3d9fe3"
   }
 ];
 
@@ -166,7 +220,7 @@ function update() {
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
-    // Aquí se podría agregar una breve animación de destellos (opcional)
+    // Aquí se podría agregar una animación de destellos (opcional)
   }
   // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
@@ -178,7 +232,7 @@ function update() {
     } else {
       ghost.direction = randomDirection();
     }
-    // Si hay colisión entre jugador y fantasma, muestra overlay de reinicio
+    // Si colisiona con el jugador, mostrar overlay de reinicio
     if (Math.hypot(player.x - ghost.x, player.y - ghost.y) < player.radius + ghost.radius) {
       displayGameOver();
     }
@@ -245,17 +299,17 @@ function drawGhostShape(ghost) {
   ctx.beginPath();
   // Cabeza (semicírculo)
   ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
-  // Base ondulada: dividida en 3 segmentos
+  // Base ondulada: dividir en 3 segmentos
   let segment = (ghost.radius * 2) / 3;
   ctx.lineTo(ghost.x + ghost.radius, ghost.y + ghost.radius);
   ctx.arc(ghost.x + ghost.radius - segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.arc(ghost.x, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.arc(ghost.x - ghost.radius + segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.closePath();
-  // Gradiente para el fantasma usando colores de marca
+  // Gradiente para el fantasma basado en su color
   let grad = ctx.createRadialGradient(ghost.x, ghost.y, ghost.radius * 0.3, ghost.x, ghost.y, ghost.radius);
-  grad.addColorStop(0, "#5f689bd");
-  grad.addColorStop(1, "#65d3a8");
+  grad.addColorStop(0, "#ffffff");
+  grad.addColorStop(1, ghost.color);
   ctx.fillStyle = grad;
   ctx.fill();
 }
@@ -303,11 +357,62 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// Mostrar overlay de Game Over con botón de reinicio
+// Crear joystick para móviles (funciona también en PC)
+document.addEventListener("DOMContentLoaded", function() {
+  if (/Mobi|Android/i.test(navigator.userAgent)) {
+    let joystick = document.getElementById("joystick");
+    if (joystick) {
+      createJoystick(joystick);
+    }
+  }
+});
+
+function createJoystick(element) {
+  let knob = document.createElement("div");
+  knob.className = "knob";
+  element.appendChild(knob);
+  let centerX = element.offsetWidth / 2;
+  let centerY = element.offsetHeight / 2;
+  let maxDistance = element.offsetWidth / 2;
+  
+  element.addEventListener("touchstart", function(e) {
+    e.preventDefault();
+    handleTouch(e);
+  });
+  element.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+    handleTouch(e);
+  });
+  element.addEventListener("touchend", function(e) {
+    e.preventDefault();
+    knob.style.left = (centerX - knob.offsetWidth/2) + "px";
+    knob.style.top = (centerY - knob.offsetHeight/2) + "px";
+    player.direction = {x: 0, y: 0};
+  });
+  
+  function handleTouch(e) {
+    let touch = e.touches[0];
+    let rect = element.getBoundingClientRect();
+    let x = touch.clientX - rect.left;
+    let y = touch.clientY - rect.top;
+    let deltaX = x - centerX;
+    let deltaY = y - centerY;
+    let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    let angle = Math.atan2(deltaY, deltaX);
+    if (distance > maxDistance) {
+      distance = maxDistance;
+    }
+    let knobX = centerX + deltaX * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetWidth/2;
+    let knobY = centerY + deltaY * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetHeight/2;
+    knob.style.left = knobX + "px";
+    knob.style.top = knobY + "px";
+    player.direction = {x: Math.cos(angle), y: Math.sin(angle)};
+  }
+}
+
+// Overlay de Game Over (cuando un fantasma toca a Pac-Man)
 function displayGameOver() {
-  // Evitar múltiples llamadas
   if (document.getElementById("gameover-overlay")) return;
-  // Detener el juego
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   let overlay = document.createElement("div");
   overlay.id = "gameover-overlay";
@@ -325,9 +430,8 @@ function displayGameOver() {
   overlay.style.fontSize = "1.5em";
   overlay.style.zIndex = "1000";
   overlay.innerHTML = `
-    <p>¡Oh no!</p>
-    <p>Has sido atrapado.</p>
-    <button id="restart-button" style="padding: 10px 20px; font-size: 1em; margin-top: 20px; background-color: #65d3a8; border: none; border-radius: 5px; cursor: pointer;">Reiniciar</button>
+    <p>¡Oh no! Has sido atrapado.</p>
+    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Reiniciar</button>
     <p style="margin-top:20px; font-size:1em;">Descubre el lujo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
@@ -336,9 +440,8 @@ function displayGameOver() {
   });
 }
 
-// Mostrar overlay de felicitación cuando la misión se complete
+// Overlay de Felicitación (cuando se completa la misión)
 function displayCongratulations() {
-  // Evitar múltiples llamadas
   if (document.getElementById("congrats-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   let overlay = document.createElement("div");
@@ -361,7 +464,7 @@ function displayCongratulations() {
     <p>¡Felicidades!</p>
     <p>Misión completada en <strong>${totalTime} segundos</strong> con <strong>${score} Tokens</strong>.</p>
     <p>Descubre el lujo exclusivo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
-    <button id="restart-button" style="padding: 10px 20px; font-size: 1em; margin-top: 20px; background-color: #65d3a8; border: none; border-radius: 5px; cursor: pointer;">Jugar de nuevo</button>
+    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Jugar de nuevo</button>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
