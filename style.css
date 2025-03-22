@@ -53,7 +53,14 @@ canvas {
   display: block;
   margin: 0 auto;
   background-color: #020202;
-  border: 2px solid #3d9fe3;
+  border: 2px solid #d4af37; /* Suave tono dorado */
+}
+
+/* Información de la misión */
+#mission-info {
+  margin: 10px;
+  font-size: 1.2em;
+  color: #d9dfe2;
 }
 
 /* Responsividad */
@@ -81,9 +88,8 @@ canvas {
     padding: 6px 12px;
     font-size: 12px;
   }
-  footer p {
+  footer p, #mission-info {
     font-size: 0.9em;
   }
 }
-
 

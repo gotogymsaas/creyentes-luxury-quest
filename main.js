@@ -1,10 +1,12 @@
 console.log("main.js cargado correctamente");
 
+// Iniciar el juego al hacer clic en "Iniciar la misión"
 document.addEventListener("DOMContentLoaded", function() {
   let startButton = document.getElementById("start-button");
   if (startButton) {
     startButton.addEventListener("click", function() {
       document.getElementById("start-screen").style.display = "none";
+      document.getElementById("mission-info").style.display = "block";
       const canvas = document.getElementById("gameCanvas");
       canvas.style.display = "block";
       let bgMusic = document.getElementById("bg-music");
@@ -16,15 +18,19 @@ document.addEventListener("DOMContentLoaded", function() {
           console.log("Error al reproducir música de fondo:", error);
         });
       }
-      gameLoop();
+      startGame();
     });
   } else {
     console.log("No se encontró el botón de inicio");
   }
 });
 
-// Función para dibujar rectángulos redondeados (suaviza los pasillos)
-function drawRoundedRect(ctx, x, y, width, height, radius) {
+// Función para dibujar rectángulos redondeados con degradado (paredes de grafeno y oro líquido)
+function drawRoundedWall(ctx, x, y, width, height, radius) {
+  let grad = ctx.createLinearGradient(x, y, x, y + height);
+  grad.addColorStop(0, "#3d3d3d");    // Gris metálico (grafeno)
+  grad.addColorStop(1, "#d4af37");      // Oro líquido suave
+  ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
   ctx.lineTo(x + width - radius, y);
@@ -61,7 +67,7 @@ const maze = [
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-// Inicializar estado de logos (pellets) sin recoger
+// Estado de los logos (pellets) sin recoger
 let pelletsCollected = [];
 for (let r = 0; r < rows; r++) {
   pelletsCollected[r] = [];
@@ -71,13 +77,14 @@ for (let r = 0; r < rows; r++) {
 }
 
 let score = 0;
+let startTime = 0;
 
-// Cargar imagen para los pellets (logo de GoToGym)
+// Imagen para los pellets (logo de GoToGym reducido)
 let pelletImg = new Image();
 pelletImg.src = "logo.png";
 const pelletSize = 20;
 
-// Configuración del jugador (Pac-Man)
+// Configuración del jugador (Pac-Man feliz con efectos de luz)
 let player = {
   x: cellSize + cellSize/2,
   y: cellSize + cellSize/2,
@@ -86,8 +93,7 @@ let player = {
   speed: 2
 };
 
-// Configuración del fantasma ("El Estrés")
-// El fantasma solo se moverá por los pasillos, ya que se revisa colisión con paredes
+// Configuración del fantasma ("El Estrés"), restringido a pasillos
 let ghost = {
   x: 7 * cellSize + cellSize/2,
   y: 4 * cellSize + cellSize/2,
@@ -96,10 +102,40 @@ let ghost = {
   speed: 2
 };
 
+function startGame() {
+  score = 0;
+  startTime = performance.now();
+  // Reiniciar pellets
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (maze[r][c] === 0) pelletsCollected[r][c] = false;
+    }
+  }
+  gameLoop();
+}
+
 function gameLoop() {
   update();
   draw();
-  requestAnimationFrame(gameLoop);
+  if (checkMissionComplete()) {
+    let totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+    alert("¡Misión completada en " + totalTime + " segundos! Tokens: " + score);
+    document.location.reload();
+  } else {
+    requestAnimationFrame(gameLoop);
+  }
+}
+
+function checkMissionComplete() {
+  // La misión se completa si se han recolectado todos los pellets
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (maze[r][c] === 0 && !pelletsCollected[r][c]) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 function update() {
@@ -110,14 +146,14 @@ function update() {
     player.x = newX;
     player.y = newY;
   }
-  // Recolecta el logo (pellet) en la celda correspondiente
+  // Recolecta logo si está en la celda
   let col = Math.floor(player.x / cellSize);
   let row = Math.floor(player.y / cellSize);
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
   }
-  // Movimiento del fantasma: calcular posición nueva y evitar paredes
+  // Movimiento del fantasma: se mueve solo en pasillos
   let newGhostX = ghost.x + ghost.direction.x * ghost.speed;
   let newGhostY = ghost.y + ghost.direction.y * ghost.speed;
   if (!collidesWithWall(newGhostX, newGhostY)) {
@@ -140,15 +176,15 @@ function draw() {
   drawPlayer();
   drawGhost();
   drawScore();
+  drawTimer();
 }
 
 function drawMaze() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (maze[r][c] === 1) {
-        ctx.fillStyle = "#3d9fe3"; // Color de marca para las paredes
-        // Dibujar pared con esquinas redondeadas (minimalismo)
-        drawRoundedRect(ctx, c * cellSize, r * cellSize, cellSize, cellSize, 5);
+        // Dibujar paredes con degradado (grafeno y oro líquido)
+        drawRoundedWall(ctx, c * cellSize, r * cellSize, cellSize, cellSize, 8);
       }
     }
   }
@@ -158,7 +194,6 @@ function drawPellets() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (maze[r][c] === 0 && !pelletsCollected[r][c]) {
-        // Dibujar el logo reducido en lugar de un pellet
         ctx.drawImage(pelletImg, c * cellSize + cellSize/2 - pelletSize/2, r * cellSize + cellSize/2 - pelletSize/2, pelletSize, pelletSize);
       }
     }
@@ -166,19 +201,28 @@ function drawPellets() {
 }
 
 function drawPlayer() {
+  let currentTime = performance.now();
+  let mouthAngle = 0.25 * Math.PI * (1 + Math.sin(currentTime / 150));
+  // Crear un gradiente radial para efecto luminoso
+  let grad = ctx.createRadialGradient(player.x, player.y, player.radius * 0.3, player.x, player.y, player.radius);
+  grad.addColorStop(0, "#ffff66");
+  grad.addColorStop(1, "#ffff00");
   ctx.beginPath();
-  // Dibujar Pac-Man clásico con "boca" abierta
-  ctx.arc(player.x, player.y, player.radius, 0.25 * Math.PI, 1.75 * Math.PI);
+  ctx.arc(player.x, player.y, player.radius, mouthAngle, 2 * Math.PI - mouthAngle);
   ctx.lineTo(player.x, player.y);
-  ctx.fillStyle = "#FFFF00"; // Amarillo clásico
+  ctx.fillStyle = grad;
   ctx.fill();
   ctx.closePath();
 }
 
 function drawGhost() {
+  // Crear un gradiente para el fantasma
+  let grad = ctx.createRadialGradient(ghost.x, ghost.y, ghost.radius * 0.3, ghost.x, ghost.y, ghost.radius);
+  grad.addColorStop(0, "#ff6666");
+  grad.addColorStop(1, "#ff0000");
   ctx.beginPath();
   ctx.arc(ghost.x, ghost.y, ghost.radius, 0, Math.PI * 2);
-  ctx.fillStyle = "#FF0000"; // Rojo
+  ctx.fillStyle = grad;
   ctx.fill();
   ctx.closePath();
 }
@@ -186,7 +230,14 @@ function drawGhost() {
 function drawScore() {
   ctx.font = "20px Arial";
   ctx.fillStyle = "#d9dfe2";
-  ctx.fillText("Score: " + score, 10, 30);
+  ctx.fillText("Tokens: " + score, 10, 30);
+}
+
+function drawTimer() {
+  let elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "#d9dfe2";
+  ctx.fillText("Tiempo: " + elapsed + " s", canvas.width - 150, 30);
 }
 
 function collidesWithWall(x, y) {
