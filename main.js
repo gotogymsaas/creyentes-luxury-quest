@@ -10,6 +10,17 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("start-screen").style.display = "none";
       const canvas = document.getElementById("gameCanvas");
       canvas.style.display = "block";
+      
+      // Reproduce la música de fondo (el usuario ya interactuó, por lo que se permite)
+      let bgMusic = document.getElementById("bg-music");
+      if (bgMusic) {
+         bgMusic.play().then(() => {
+             console.log("Música de fondo reproduciéndose");
+         }).catch((error) => {
+             console.log("Error al reproducir música de fondo:", error);
+         });
+      }
+      
       startGame();
     });
   } else {
@@ -17,68 +28,187 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Datos del avatar (se comporta como Pac‑Man)
-let avatar = { x: 100, y: 100, radius: 10, color: "#d9dfe2" };
+// Función para ajustar el canvas según el tamaño de la ventana (responsive)
+function resizeCanvas() {
+  const canvas = document.getElementById("gameCanvas");
+  const aspect = 4 / 3; // Relación de aspecto 800x600
+  let width = window.innerWidth;
+  if (width > 800) width = 800;
+  let height = width / aspect;
+  canvas.width = width;
+  canvas.height = height;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-// Definir un laberinto básico usando un array de paredes (simulando un estilo Pac‑Man)
-const walls = [
-  // Bordes
-  {x: 50, y: 50, w: 700, h: 10},
-  {x: 50, y: 50, w: 10, h: 500},
-  {x: 50, y: 540, w: 700, h: 10},
-  {x: 740, y: 50, w: 10, h: 500},
-  // Paredes internas horizontales
-  {x: 150, y: 150, w: 500, h: 10},
-  {x: 150, y: 300, w: 500, h: 10},
-  {x: 150, y: 450, w: 500, h: 10},
-  // Paredes internas verticales
-  {x: 150, y: 150, w: 10, h: 310},
-  {x: 640, y: 150, w: 10, h: 310},
-];
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-function startGame() {
-  console.log("startGame ejecutado");
-  redrawGame();
+// Variables del juego
+let score = 0;
 
-  // Permite mover el avatar con las flechas
-  document.addEventListener("keydown", function(event) {
-    const step = 5;
-    if (event.key === "ArrowUp") {
-      avatar.y -= step;
-    } else if (event.key === "ArrowDown") {
-      avatar.y += step;
-    } else if (event.key === "ArrowLeft") {
-      avatar.x -= step;
-    } else if (event.key === "ArrowRight") {
-      avatar.x += step;
-    }
-    console.log("Avatar pos:", avatar.x, avatar.y);
-    redrawGame();
+let avatar = { x: 100, y: 100, radius: 10, color: "#d9dfe2", speed: 3 };
+
+// Generar pellets (puntos dorados)
+let pellets = [];
+for (let i = 0; i < 20; i++) {
+  pellets.push({
+    x: Math.random() * (canvas.width - 120) + 60,
+    y: Math.random() * (canvas.height - 120) + 60,
+    radius: 4,
+    collected: false,
+    color: "#d4af37"  // dorado
   });
 }
 
-function redrawGame() {
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawLabyrinth(ctx);
-  drawAvatar(ctx);
+// Generar fantasmas (obstáculos: "El Estrés")
+let ghosts = [];
+for (let i = 0; i < 3; i++) {
+  ghosts.push({
+    x: 200 + i * 150,
+    y: 200,
+    radius: 10,
+    color: "#ff4d4d",  // rojo
+    dx: (Math.random() < 0.5 ? -1 : 1) * 2,
+    dy: (Math.random() < 0.5 ? -1 : 1) * 2
+  });
 }
 
-function drawLabyrinth(ctx) {
-  console.log("drawLabyrinth ejecutado");
+// Definir paredes del laberinto (se adapta al canvas)
+function getWalls() {
+  return [
+    { x: 50, y: 50, w: canvas.width - 100, h: 10 },
+    { x: 50, y: 50, w: 10, h: canvas.height - 100 },
+    { x: 50, y: canvas.height - 50, w: canvas.width - 100, h: 10 },
+    { x: canvas.width - 50, y: 50, w: 10, h: canvas.height - 100 },
+    { x: 150, y: 150, w: canvas.width - 300, h: 10 },
+    { x: 150, y: 300, w: canvas.width - 300, h: 10 },
+    { x: 150, y: 450, w: canvas.width - 300, h: 10 },
+    { x: 150, y: 150, w: 10, h: canvas.height - 300 },
+    { x: canvas.width - 150, y: 150, w: 10, h: canvas.height - 300 }
+  ];
+}
+
+let walls = getWalls();
+
+// Capturar entradas del teclado
+let keys = {};
+document.addEventListener("keydown", function(e) {
+  keys[e.key] = true;
+});
+document.addEventListener("keyup", function(e) {
+  keys[e.key] = false;
+});
+
+function startGame() {
+  score = 0;
+  // Reinicia pellets (puedes regenerarlos si lo deseas)
+  pellets.forEach(p => p.collected = false);
+  // Actualiza las paredes según el tamaño del canvas
+  walls = getWalls();
+  gameLoop();
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function update() {
+  if (keys["ArrowUp"]) avatar.y -= avatar.speed;
+  if (keys["ArrowDown"]) avatar.y += avatar.speed;
+  if (keys["ArrowLeft"]) avatar.x -= avatar.speed;
+  if (keys["ArrowRight"]) avatar.x += avatar.speed;
+
+  // Mantener al avatar dentro del área
+  if (avatar.x < 60) avatar.x = 60;
+  if (avatar.x > canvas.width - 60) avatar.x = canvas.width - 60;
+  if (avatar.y < 60) avatar.y = 60;
+  if (avatar.y > canvas.height - 60) avatar.y = canvas.height - 60;
+
+  // Movimiento de fantasmas (rebote en los límites)
+  ghosts.forEach(ghost => {
+    ghost.x += ghost.dx;
+    ghost.y += ghost.dy;
+    if (ghost.x < 60 || ghost.x > canvas.width - 60) ghost.dx *= -1;
+    if (ghost.y < 60 || ghost.y > canvas.height - 60) ghost.dy *= -1;
+  });
+
+  // Colisión: avatar y pellets
+  pellets.forEach(p => {
+    if (!p.collected && isColliding(avatar, p)) {
+      p.collected = true;
+      score += 10;
+      console.log("Pellet collected! Score: " + score);
+    }
+  });
+
+  // Colisión: avatar y fantasmas
+  ghosts.forEach(ghost => {
+    if (isColliding(avatar, ghost)) {
+      alert("¡Has sido atrapado por El Estrés!");
+      document.location.reload();
+    }
+  });
+}
+
+function isColliding(c1, c2) {
+  let dx = c1.x - c2.x;
+  let dy = c1.y - c2.y;
+  let distance = Math.sqrt(dx * dx + dy * dy);
+  return distance < c1.radius + c2.radius;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawLabyrinth();
+  drawPellets();
+  drawAvatar();
+  drawGhosts();
+  drawScore();
+}
+
+function drawLabyrinth() {
   walls.forEach(wall => {
-    ctx.fillStyle = "#3d9fe3"; // Azul para las paredes
+    ctx.fillStyle = "#3d9fe3";
     ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
   });
 }
 
-function drawAvatar(ctx) {
-  console.log("drawAvatar ejecutado");
+function drawPellets() {
+  pellets.forEach(p => {
+    if (!p.collected) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.closePath();
+    }
+  });
+}
+
+function drawAvatar() {
   ctx.beginPath();
   ctx.arc(avatar.x, avatar.y, avatar.radius, 0, Math.PI * 2);
   ctx.fillStyle = avatar.color;
   ctx.fill();
   ctx.closePath();
+}
+
+function drawGhosts() {
+  ghosts.forEach(ghost => {
+    ctx.beginPath();
+    ctx.arc(ghost.x, ghost.y, ghost.radius, 0, Math.PI * 2);
+    ctx.fillStyle = ghost.color;
+    ctx.fill();
+    ctx.closePath();
+  });
+}
+
+function drawScore() {
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "#d9dfe2";
+  ctx.fillText("Score: " + score, canvas.width - 150, 30);
 }
 
