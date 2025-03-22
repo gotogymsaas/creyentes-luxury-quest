@@ -86,7 +86,7 @@ canvas {
   color: #d9dfe2;
 }
 
-/* Estilos para el joystick en móviles */
+/* Joystick para móviles */
 #joystick {
   position: fixed;
   bottom: 20px;
@@ -108,7 +108,7 @@ canvas {
   border-radius: 50%;
 }
 
-/* Responsividad */
+/* Responsividad adicional */
 @media (max-width: 800px) {
   #logo {
     width: 120px;

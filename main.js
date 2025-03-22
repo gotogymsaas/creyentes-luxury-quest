@@ -66,7 +66,6 @@ function createJoystick(element) {
     let deltaY = y - centerY;
     // Calcula el ángulo en grados
     let angleDeg = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-    // Redondea a la dirección cardinal más cercana
     if (angleDeg >= -45 && angleDeg < 45) {
       player.direction = {x: 1, y: 0}; // Derecha
     } else if (angleDeg >= 45 && angleDeg < 135) {
@@ -76,7 +75,7 @@ function createJoystick(element) {
     } else {
       player.direction = {x: -1, y: 0}; // Izquierda
     }
-    // Mover el knob de forma proporcional (opcional, para feedback visual)
+    // Mover el knob para feedback visual
     let distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDistance);
     let knobX = centerX + (player.direction.x * distance) - knob.offsetWidth/2;
     let knobY = centerY + (player.direction.y * distance) - knob.offsetHeight/2;
@@ -153,26 +152,26 @@ let player = {
   speed: 2
 };
 
-// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca válidos y reubicados en celdas abiertas
+// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca
 let ghosts = [
   {
-    x: 1 * cellSize + cellSize/2,  // Ghost1 en fila 1, columna 1 (celda abierta)
-    y: 2 * cellSize + cellSize/2,
+    x: 3 * cellSize + cellSize/2,
+    y: 1 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 1, y: 0},
     speed: 2,
     color: "#65d3a8"
   },
   {
-    x: 1 * cellSize + cellSize/2,  // Ghost2 en fila 6, columna 1
+    x: 11 * cellSize + cellSize/2,
     y: 6 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: -1, y: 0},
     speed: 2,
-    color: "#5f689b"   // Color corregido y válido
+    color: "#5f689b"
   },
   {
-    x: 11 * cellSize + cellSize/2, // Ghost3 se mantiene en una celda abierta
+    x: 11 * cellSize + cellSize/2,
     y: 3 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 0, y: 1},
@@ -184,7 +183,6 @@ let ghosts = [
 function startGame() {
   score = 0;
   startTime = performance.now();
-  // Reiniciar pellets
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (maze[r][c] === 0) pelletsCollected[r][c] = false;
@@ -215,22 +213,18 @@ function checkMissionComplete() {
 }
 
 function update() {
-  // Actualiza la posición del jugador si no colisiona con pared
   let newX = player.x + player.direction.x * player.speed;
   let newY = player.y + player.direction.y * player.speed;
   if (!collidesWithWall(newX, newY)) {
     player.x = newX;
     player.y = newY;
   }
-  // Recolecta el logo (pellet)
   let col = Math.floor(player.x / cellSize);
   let row = Math.floor(player.y / cellSize);
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
-    // Se puede agregar animación de destellos (opcional)
   }
-  // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
     let newGhostX = ghost.x + ghost.direction.x * ghost.speed;
     let newGhostY = ghost.y + ghost.direction.y * ghost.speed;
@@ -240,7 +234,6 @@ function update() {
     } else {
       ghost.direction = randomDirection();
     }
-    // Si colisiona con el jugador, mostrar overlay de Game Over
     if (Math.hypot(player.x - ghost.x, player.y - ghost.y) < player.radius + ghost.radius) {
       displayGameOver();
     }
@@ -289,7 +282,6 @@ function drawPlayer() {
   ctx.fillStyle = grad;
   ctx.fill();
   ctx.closePath();
-  // Dibujar el pequeño ojo clásico
   ctx.beginPath();
   ctx.arc(player.x + player.radius/3, player.y - player.radius/2, 3, 0, Math.PI * 2);
   ctx.fillStyle = "#000000";
@@ -305,9 +297,7 @@ function drawGhosts() {
 
 function drawGhostShape(ghost) {
   ctx.beginPath();
-  // Cabeza: semicírculo
   ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
-  // Base ondulada: dividir en 3 segmentos
   let segment = (ghost.radius * 2) / 3;
   ctx.lineTo(ghost.x + ghost.radius, ghost.y + ghost.radius);
   ctx.arc(ghost.x + ghost.radius - segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
@@ -351,7 +341,7 @@ function randomDirection() {
   return directions[Math.floor(Math.random() * directions.length)];
 }
 
-// Capturar entradas del teclado para mover al jugador
+// Entradas de teclado para mover al jugador
 document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowUp") {
     player.direction = {x: 0, y: -1};
@@ -364,7 +354,7 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// Overlay de Game Over: redirige a la landing page
+// Overlay de Game Over: botón reinicia el juego y redirige a la landing page
 function displayGameOver() {
   if (document.getElementById("gameover-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -386,15 +376,15 @@ function displayGameOver() {
   overlay.innerHTML = `
     <p>¡Oh no! Has sido atrapado.</p>
     <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Reiniciar</button>
-    <p style="margin-top:20px; font-size:1em;">Descubre el lujo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
+    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
-    window.location.href = "https://gotogymsbyjohnfrankalza.mailchimpsites.com/";
+    location.reload();
   });
 }
 
-// Overlay de Felicitación: redirige a la landing page
+// Overlay de Felicitación: botón reinicia el juego y redirige a la landing page
 function displayCongratulations() {
   if (document.getElementById("congrats-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -417,12 +407,12 @@ function displayCongratulations() {
   overlay.innerHTML = `
     <p>¡Felicidades!</p>
     <p>Misión completada en <strong>${totalTime} segundos</strong> con <strong>${score} Tokens</strong>.</p>
-    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Continuar</button>
-    <p style="margin-top:20px; font-size:1em;">Descubre el lujo exclusivo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
+    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Reiniciar</button>
+    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
-    window.location.href = "https://gotogymsbyjohnfrankalza.mailchimpsites.com/";
+    location.reload();
   });
 }
 
