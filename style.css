@@ -35,18 +35,11 @@ button:hover {
 canvas {
   display: block;
   margin: 0 auto;
-  background-color: #020202;
+  background-color: #000000;
 }
 
-/* Media queries para responsividad */
+/* Responsividad: Ajusta tamaños en dispositivos pequeños */
 @media (max-width: 800px) {
-  canvas {
-    width: 100%;
-    height: auto;
-  }
-  #start-screen {
-    padding-top: 20px;
-  }
   #logo {
     width: 120px;
   }
