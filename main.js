@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function() {
   } else {
     console.log("No se encontró el botón de inicio");
   }
-  // Si se detecta un dispositivo móvil, muestra el joystick
+  // Si se detecta un dispositivo móvil, mostrar el joystick
   if (/Mobi|Android/i.test(navigator.userAgent)) {
     let joystick = document.getElementById("joystick");
     if (joystick) {
@@ -161,7 +161,7 @@ let ghosts = [
     radius: cellSize/2 - 5,
     direction: {x: -1, y: 0},
     speed: 2,
-    color: "#5f689bd"
+    color: "#5f689b"   // Corregido: color válido
   },
   {
     x: 11 * cellSize + cellSize/2,
@@ -220,7 +220,7 @@ function update() {
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
-    // Aquí se podría agregar una animación de destellos (opcional)
+    // Aquí se puede agregar animación de destellos
   }
   // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
@@ -232,7 +232,7 @@ function update() {
     } else {
       ghost.direction = randomDirection();
     }
-    // Si colisiona con el jugador, mostrar overlay de reinicio
+    // Si colisiona con el jugador, mostrar overlay de Game Over
     if (Math.hypot(player.x - ghost.x, player.y - ghost.y) < player.radius + ghost.radius) {
       displayGameOver();
     }
@@ -297,7 +297,7 @@ function drawGhosts() {
 
 function drawGhostShape(ghost) {
   ctx.beginPath();
-  // Cabeza (semicírculo)
+  // Cabeza: semicírculo
   ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
   // Base ondulada: dividir en 3 segmentos
   let segment = (ghost.radius * 2) / 3;
@@ -306,7 +306,6 @@ function drawGhostShape(ghost) {
   ctx.arc(ghost.x, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.arc(ghost.x - ghost.radius + segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
   ctx.closePath();
-  // Gradiente para el fantasma basado en su color
   let grad = ctx.createRadialGradient(ghost.x, ghost.y, ghost.radius * 0.3, ghost.x, ghost.y, ghost.radius);
   grad.addColorStop(0, "#ffffff");
   grad.addColorStop(1, ghost.color);
@@ -410,7 +409,7 @@ function createJoystick(element) {
   }
 }
 
-// Overlay de Game Over (cuando un fantasma toca a Pac-Man)
+// Overlay de Game Over (cuando un fantasma toca al jugador)
 function displayGameOver() {
   if (document.getElementById("gameover-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
