@@ -2,24 +2,27 @@ console.log("main.js cargado correctamente");
 
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM fully loaded and parsed");
-  let startButton = document.getElementById("start-button");
-  console.log("startButton:", startButton);
-  if (startButton) {
-    startButton.addEventListener("click", function() {
-      console.log("Botón 'Iniciar la misión' clickeado");
-      document.getElementById("start-screen").style.display = "none";
-      const canvas = document.getElementById("gameCanvas");
-      canvas.style.display = "block";
+let startButton = document.getElementById("start-button");
+if (startButton) {
+  startButton.addEventListener("click", function() {
+    console.log("Botón 'Iniciar la misión' clickeado");
+    document.getElementById("start-screen").style.display = "none";
+    const canvas = document.getElementById("gameCanvas");
+    canvas.style.display = "block";
+    startGame();
+  });
+}
       
       // Reproduce la música de fondo (el usuario ya interactuó, por lo que se permite)
-      let bgMusic = document.getElementById("bg-music");
-      if (bgMusic) {
-         bgMusic.play().then(() => {
-             console.log("Música de fondo reproduciéndose");
-         }).catch((error) => {
-             console.log("Error al reproducir música de fondo:", error);
-         });
-      }
+let bgMusic = document.getElementById("bg-music");
+if (bgMusic) {
+  bgMusic.volume = 0.5;  // Ajusta el volumen al 50%
+  bgMusic.play().then(() => {
+    console.log("Música de fondo reproduciéndose");
+  }).catch((error) => {
+    console.log("Error al reproducir música de fondo:", error);
+  });
+}
       
       startGame();
     });
