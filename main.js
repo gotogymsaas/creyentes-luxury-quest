@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function() {
   } else {
     console.log("No se encontró el botón de inicio");
   }
-  // Si se detecta un dispositivo móvil, mostrar el joystick
+  // Mostrar joystick en móviles
   if (/Mobi|Android/i.test(navigator.userAgent)) {
     let joystick = document.getElementById("joystick");
     if (joystick) {
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Función para crear un joystick en pantalla
+// Función para crear un joystick "rígido" (solo direcciones cardinales)
 function createJoystick(element) {
   let knob = document.createElement("div");
   knob.className = "knob";
@@ -64,24 +64,32 @@ function createJoystick(element) {
     let y = touch.clientY - rect.top;
     let deltaX = x - centerX;
     let deltaY = y - centerY;
-    let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    let angle = Math.atan2(deltaY, deltaX);
-    if (distance > maxDistance) {
-      distance = maxDistance;
+    // Calcula el ángulo en grados
+    let angleDeg = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+    // Redondea a la dirección cardinal más cercana
+    if (angleDeg >= -45 && angleDeg < 45) {
+      player.direction = {x: 1, y: 0}; // Derecha
+    } else if (angleDeg >= 45 && angleDeg < 135) {
+      player.direction = {x: 0, y: 1}; // Abajo
+    } else if (angleDeg >= -135 && angleDeg < -45) {
+      player.direction = {x: 0, y: -1}; // Arriba
+    } else {
+      player.direction = {x: -1, y: 0}; // Izquierda
     }
-    let knobX = centerX + deltaX * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetWidth/2;
-    let knobY = centerY + deltaY * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetHeight/2;
+    // Mover el knob de forma proporcional (opcional, para feedback visual)
+    let distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDistance);
+    let knobX = centerX + (player.direction.x * distance) - knob.offsetWidth/2;
+    let knobY = centerY + (player.direction.y * distance) - knob.offsetHeight/2;
     knob.style.left = knobX + "px";
     knob.style.top = knobY + "px";
-    player.direction = {x: Math.cos(angle), y: Math.sin(angle)};
   }
 }
 
 // Función para dibujar paredes con degradado y esquinas redondeadas
 function drawRoundedWall(ctx, x, y, width, height, radius) {
   let grad = ctx.createLinearGradient(x, y, x, y + height);
-  grad.addColorStop(0, "#3d3d3d");  // Grafeno
-  grad.addColorStop(1, "#d4af37");    // Oro líquido
+  grad.addColorStop(0, "#3d3d3d");
+  grad.addColorStop(1, "#d4af37");
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -145,26 +153,26 @@ let player = {
   speed: 2
 };
 
-// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca
+// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca válidos y reubicados en celdas abiertas
 let ghosts = [
   {
-    x: 7 * cellSize + cellSize/2,
-    y: 4 * cellSize + cellSize/2,
+    x: 1 * cellSize + cellSize/2,  // Ghost1 en fila 1, columna 1 (celda abierta)
+    y: 2 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 1, y: 0},
     speed: 2,
     color: "#65d3a8"
   },
   {
-    x: 10 * cellSize + cellSize/2,
+    x: 1 * cellSize + cellSize/2,  // Ghost2 en fila 6, columna 1
     y: 6 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: -1, y: 0},
     speed: 2,
-    color: "#5f689b"   // Corregido: color válido
+    color: "#5f689b"   // Color corregido y válido
   },
   {
-    x: 11 * cellSize + cellSize/2,
+    x: 11 * cellSize + cellSize/2, // Ghost3 se mantiene en una celda abierta
     y: 3 * cellSize + cellSize/2,
     radius: cellSize/2 - 5,
     direction: {x: 0, y: 1},
@@ -220,7 +228,7 @@ function update() {
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
-    // Aquí se puede agregar animación de destellos
+    // Se puede agregar animación de destellos (opcional)
   }
   // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
@@ -356,60 +364,7 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// Crear joystick para móviles (funciona también en PC)
-document.addEventListener("DOMContentLoaded", function() {
-  if (/Mobi|Android/i.test(navigator.userAgent)) {
-    let joystick = document.getElementById("joystick");
-    if (joystick) {
-      createJoystick(joystick);
-    }
-  }
-});
-
-function createJoystick(element) {
-  let knob = document.createElement("div");
-  knob.className = "knob";
-  element.appendChild(knob);
-  let centerX = element.offsetWidth / 2;
-  let centerY = element.offsetHeight / 2;
-  let maxDistance = element.offsetWidth / 2;
-  
-  element.addEventListener("touchstart", function(e) {
-    e.preventDefault();
-    handleTouch(e);
-  });
-  element.addEventListener("touchmove", function(e) {
-    e.preventDefault();
-    handleTouch(e);
-  });
-  element.addEventListener("touchend", function(e) {
-    e.preventDefault();
-    knob.style.left = (centerX - knob.offsetWidth/2) + "px";
-    knob.style.top = (centerY - knob.offsetHeight/2) + "px";
-    player.direction = {x: 0, y: 0};
-  });
-  
-  function handleTouch(e) {
-    let touch = e.touches[0];
-    let rect = element.getBoundingClientRect();
-    let x = touch.clientX - rect.left;
-    let y = touch.clientY - rect.top;
-    let deltaX = x - centerX;
-    let deltaY = y - centerY;
-    let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    let angle = Math.atan2(deltaY, deltaX);
-    if (distance > maxDistance) {
-      distance = maxDistance;
-    }
-    let knobX = centerX + deltaX * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetWidth/2;
-    let knobY = centerY + deltaY * (distance / Math.sqrt(deltaX * deltaX + deltaY * deltaY)) - knob.offsetHeight/2;
-    knob.style.left = knobX + "px";
-    knob.style.top = knobY + "px";
-    player.direction = {x: Math.cos(angle), y: Math.sin(angle)};
-  }
-}
-
-// Overlay de Game Over (cuando un fantasma toca al jugador)
+// Overlay de Game Over: redirige a la landing page
 function displayGameOver() {
   if (document.getElementById("gameover-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -435,11 +390,11 @@ function displayGameOver() {
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
-    location.reload();
+    window.location.href = "https://gotogymsbyjohnfrankalza.mailchimpsites.com/";
   });
 }
 
-// Overlay de Felicitación (cuando se completa la misión)
+// Overlay de Felicitación: redirige a la landing page
 function displayCongratulations() {
   if (document.getElementById("congrats-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -462,12 +417,12 @@ function displayCongratulations() {
   overlay.innerHTML = `
     <p>¡Felicidades!</p>
     <p>Misión completada en <strong>${totalTime} segundos</strong> con <strong>${score} Tokens</strong>.</p>
-    <p>Descubre el lujo exclusivo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
-    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Jugar de nuevo</button>
+    <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Continuar</button>
+    <p style="margin-top:20px; font-size:1em;">Descubre el lujo exclusivo en <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
-    location.reload();
+    window.location.href = "https://gotogymsbyjohnfrankalza.mailchimpsites.com/";
   });
 }
 
