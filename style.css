@@ -1,5 +1,14 @@
+/* Fondo animado sutil (degradado en movimiento) */
+@keyframes backgroundAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 body {
-  background-color: #020202;
+  background: linear-gradient(270deg, #020202, #20415b, #020202);
+  background-size: 400% 400%;
+  animation: backgroundAnimation 15s ease infinite;
   color: #d9dfe2;
   font-family: Arial, sans-serif;
   margin: 0;
@@ -32,6 +41,14 @@ footer p {
   width: 150px;
   height: auto;
   margin-bottom: 20px;
+  /* Efecto de brillo sutil para el logo */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+  100% { filter: brightness(1); }
 }
 
 button {
