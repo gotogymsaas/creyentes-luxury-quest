@@ -152,27 +152,30 @@ let player = {
   speed: 2
 };
 
-// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca
+// Configuración de los fantasmas ("El Estrés") – tres, con colores de marca y reubicados lejos del jugador
 let ghosts = [
   {
-    x: 3 * cellSize + cellSize/2,
-    y: 1 * cellSize + cellSize/2,
+    // Ghost1: ubicado en celda (col 13, row 7)
+    x: 13 * cellSize + cellSize/2,  // 13*40+20 = 520+20 = 540
+    y: 7 * cellSize + cellSize/2,   // 7*40+20 = 280+20 = 300
     radius: cellSize/2 - 5,
     direction: {x: 1, y: 0},
     speed: 2,
     color: "#65d3a8"
   },
   {
-    x: 11 * cellSize + cellSize/2,
-    y: 6 * cellSize + cellSize/2,
+    // Ghost2: ubicado en celda (col 11, row 6)
+    x: 11 * cellSize + cellSize/2,  // 11*40+20 = 440+20 = 460
+    y: 6 * cellSize + cellSize/2,   // 6*40+20 = 240+20 = 260
     radius: cellSize/2 - 5,
     direction: {x: -1, y: 0},
     speed: 2,
     color: "#5f689b"
   },
   {
-    x: 11 * cellSize + cellSize/2,
-    y: 3 * cellSize + cellSize/2,
+    // Ghost3: ubicado en celda (col 8, row 7)
+    x: 8 * cellSize + cellSize/2,   // 8*40+20 = 320+20 = 340
+    y: 7 * cellSize + cellSize/2,    // 7*40+20 = 280+20 = 300
     radius: cellSize/2 - 5,
     direction: {x: 0, y: 1},
     speed: 2,
@@ -183,6 +186,7 @@ let ghosts = [
 function startGame() {
   score = 0;
   startTime = performance.now();
+  // Reiniciar pellets
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (maze[r][c] === 0) pelletsCollected[r][c] = false;
@@ -213,18 +217,21 @@ function checkMissionComplete() {
 }
 
 function update() {
+  // Actualiza la posición del jugador si no colisiona con pared
   let newX = player.x + player.direction.x * player.speed;
   let newY = player.y + player.direction.y * player.speed;
   if (!collidesWithWall(newX, newY)) {
     player.x = newX;
     player.y = newY;
   }
+  // Recolecta el logo (pellet)
   let col = Math.floor(player.x / cellSize);
   let row = Math.floor(player.y / cellSize);
   if (maze[row][col] === 0 && !pelletsCollected[row][col]) {
     pelletsCollected[row][col] = true;
     score += 10;
   }
+  // Actualiza movimiento de cada fantasma
   ghosts.forEach(ghost => {
     let newGhostX = ghost.x + ghost.direction.x * ghost.speed;
     let newGhostY = ghost.y + ghost.direction.y * ghost.speed;
@@ -234,6 +241,7 @@ function update() {
     } else {
       ghost.direction = randomDirection();
     }
+    // Si colisiona con el jugador, mostrar overlay de Game Over
     if (Math.hypot(player.x - ghost.x, player.y - ghost.y) < player.radius + ghost.radius) {
       displayGameOver();
     }
@@ -282,6 +290,7 @@ function drawPlayer() {
   ctx.fillStyle = grad;
   ctx.fill();
   ctx.closePath();
+  // Dibujar el pequeño ojo clásico
   ctx.beginPath();
   ctx.arc(player.x + player.radius/3, player.y - player.radius/2, 3, 0, Math.PI * 2);
   ctx.fillStyle = "#000000";
@@ -297,7 +306,9 @@ function drawGhosts() {
 
 function drawGhostShape(ghost) {
   ctx.beginPath();
+  // Cabeza: semicírculo
   ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
+  // Base ondulada: dividir en 3 segmentos
   let segment = (ghost.radius * 2) / 3;
   ctx.lineTo(ghost.x + ghost.radius, ghost.y + ghost.radius);
   ctx.arc(ghost.x + ghost.radius - segment/2, ghost.y + ghost.radius, segment/2, 0, Math.PI, true);
@@ -354,7 +365,7 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// Overlay de Game Over: botón reinicia el juego y redirige a la landing page
+// Overlay de Game Over: reinicia el juego y redirige a la landing page
 function displayGameOver() {
   if (document.getElementById("gameover-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -376,7 +387,7 @@ function displayGameOver() {
   overlay.innerHTML = `
     <p>¡Oh no! Has sido atrapado.</p>
     <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Reiniciar</button>
-    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
+    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://linktr.ee/GTGBYJFA" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
@@ -384,7 +395,7 @@ function displayGameOver() {
   });
 }
 
-// Overlay de Felicitación: botón reinicia el juego y redirige a la landing page
+// Overlay de Felicitación: reinicia el juego y redirige a la landing page
 function displayCongratulations() {
   if (document.getElementById("congrats-overlay")) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -408,7 +419,7 @@ function displayCongratulations() {
     <p>¡Felicidades!</p>
     <p>Misión completada en <strong>${totalTime} segundos</strong> con <strong>${score} Tokens</strong>.</p>
     <button id="restart-button" style="padding:10px 20px; font-size:1em; margin-top:20px; background-color:#65d3a8; border:none; border-radius:5px; cursor:pointer;">Reiniciar</button>
-    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://gotogymsbyjohnfrankalza.mailchimpsites.com/" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
+    <p style="margin-top:20px; font-size:1em;">Visita nuestra landing: <a href="https://linktr.ee/GTGBYJFA" target="_blank" style="color:#65d3a8; text-decoration:none;">Go To Gym by John Frank Alza</a></p>
   `;
   document.body.appendChild(overlay);
   document.getElementById("restart-button").addEventListener("click", function(){
